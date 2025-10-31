@@ -1,0 +1,6 @@
+fastapi[all]
+uvicorn[standard]
+sqlalchemy
+pydantic-settings # For managing environment variables
+psycopg2-binary
+python-dotenv
