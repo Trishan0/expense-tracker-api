@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-
 from api.routers import expenses
+
 
 app = FastAPI()
 
