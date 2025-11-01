@@ -13,4 +13,10 @@ def get_all_expenses(db:Session = Depends(get_db)):
     return db_expenses
     
 
+@router.get("/{expense_id}")
+def get_expense_by_id(expense_id:int, db:Session = Depends(get_db)):
+    expense = db.query(db_models.Expense).filter(db_models.Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    return expense
 
