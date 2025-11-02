@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlmodel import select
 from api.db_functions import init_db, get_db
 import api.db_models as db_models
-
+import api.models as models
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
 
@@ -20,3 +20,9 @@ def get_expense_by_id(expense_id:int, db:Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Expense not found")
     return expense
 
+@router.post("/")
+def create_expense(expense:models.ExpenseBase, db:Session = Depends(get_db)):
+    db.add(db_models.Expense(**expense.model_dump()))
+    db.commit()
+    print("Expense created successfully")
+    return expense
