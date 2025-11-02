@@ -1,15 +1,15 @@
 from pydantic import BaseModel
-from datetime import date
+import datetime
 
 class ExpenseBase(BaseModel):
     id: int
     description: str
     amount: float
-    date: date
+    date: datetime.date
     category: str
     
 class ExpenseUpdate(BaseModel):
     description: str | None = None
     amount: float | None = None
-    date: date | None = None
+    date: datetime.date | None = None
     category: str | None = None
