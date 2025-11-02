@@ -27,18 +27,22 @@ def create_expense(expense:models.ExpenseBase, db:Session = Depends(get_db)):
     print("Expense created successfully")
     return expense
 
-@router.put("/{expense_id}")
-def update_expense(expense_id:int, updated_expense: models.ExpenseBase, db:Session = Depends(get_db)):
+@router.patch("/{expense_id}")
+def partial_update_expense(expense_id: int, updated_fields: models.ExpenseUpdate, db: Session = Depends(get_db)):
     expense = db.query(db_models.Expense).filter(db_models.Expense.id == expense_id).first()
+    
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
-    expense.description = updated_expense.description
-    expense.amount = updated_expense.amount
-    expense.date = updated_expense.date
-    expense.category = updated_expense.category
-    db.commit()
     
-    return {"message": "Expense updated successfully"}
+    update_dict = updated_fields.model_dump(exclude_unset=True)
+    
+    for key, value in update_dict.items():
+        setattr(expense, key, value)
+        
+    db.commit()
+    db.refresh(expense)
+    return {"message": "Expense partially updated successfully"}
+    
  
 @router.delete("/{expense_id}")
 def delete_expense(expense_id:int, db:Session = Depends(get_db)):
