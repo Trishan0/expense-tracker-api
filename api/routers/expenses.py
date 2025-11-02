@@ -40,3 +40,11 @@ def update_expense(expense_id:int, updated_expense: models.ExpenseBase, db:Sessi
     
     return {"message": "Expense updated successfully"}
  
+@router.delete("/{expense_id}")
+def delete_expense(expense_id:int, db:Session = Depends(get_db)):
+    expense = db.query(db_models.Expense).filter(db_models.Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    db.delete(expense)
+    db.commit()
+    return {"message": "Expense deleted successfully"}
