@@ -10,7 +10,7 @@ sample_data_path = pathlib.Path(__file__).with_name("sample_data.json")
 
 with sample_data_path.open("r", encoding="utf-8")as sample_file:
     sample_data = json.load(sample_file)
-expenses = [models.ExpenseBase(**expense) for expense in sample_data]
+expenses = [models.ExpenseCreate(**expense) for expense in sample_data]
 
 def get_db():
     try:
@@ -28,4 +28,4 @@ def init_db():
             db.add(db_models.Expense(**expense.model_dump()))
     db.commit()
 
-init_db()
+# init_db()
