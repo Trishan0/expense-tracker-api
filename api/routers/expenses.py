@@ -25,7 +25,7 @@ def get_expense_by_id(expense_id:int, db:Session = Depends(get_db)):
     return expense
 
 @router.post("/")
-def create_expense(expense:models.ExpenseBase, db:Session = Depends(get_db)):
+def create_expense(expense:models.ExpenseCreate, db:Session = Depends(get_db)):
     db_expense = db_models.Expense(**expense.model_dump())
     db.add(db_expense)
     db.commit()
