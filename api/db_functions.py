@@ -22,10 +22,22 @@ def get_db():
 
 def init_db():
     db = sessionLocal()
-    count = db.query(db_models.Expense).count()
-    if count ==0:
-        for expense in expenses:
-            db.add(db_models.Expense(**expense.model_dump()))
+    
+    user_count = db.query(db_models.User).count()
+    if user_count ==0:
+        from api.security import hash_password
+        
+        test_user = db_models.User(username="test", password=hash_password("test"))
+        db.add(test_user)
+        db.commit()
+        db.refresh(test_user)
+        
+        expense_count = db.query(db_models.Expense).count()
+        if expense_count ==0:
+            for expense in expenses:
+                db_expense = db_models.Expense(**expense.model_dump(), user_id=test_user.id)
+                db.add(db_expense)
     db.commit()
+    db.close()
 
-# init_db()
+init_db()
