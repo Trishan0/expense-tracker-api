@@ -42,12 +42,9 @@ def get_all_expenses(filter: str| None = None, start_date: str| None = None, end
 
         if start_dt > end_dt:
             raise HTTPException(status_code=400, detail="start_date must be before end_date")
-        try:
             
-            query = query.filter(db_models.Expense.date >= start_dt, db_models.Expense.date <= end_dt)
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid date format")
-        
+        query = query.filter(db_models.Expense.date >= start_dt, db_models.Expense.date <= end_dt)
+
     else:
         raise HTTPException(status_code=400, detail="Invalid filter value")
             
