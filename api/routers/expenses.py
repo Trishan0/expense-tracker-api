@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from sqlmodel import select
 from api.db_functions import init_db, get_db
@@ -14,7 +14,13 @@ router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
 
 @router.get("/")
-def get_all_expenses(filter: str| None = None, start_date: str| None = None, end_date: str| None = None, db:Session = Depends(get_db), current_user:db_models.User = Depends(get_current_user)):
+def get_all_expenses(
+    filter: str| None = Query(None, description="Filter for expenses. Options: last_week, last_month, last_3_months, custom"),
+    start_date: str| None = Query(None, description="Start date for custom filter (YYYY-MM-DD)"),
+    end_date: str| None = Query(None, description="End date for custom filter (YYYY-MM-DD)"),
+    db:Session = Depends(get_db),
+    current_user:db_models.User = Depends(get_current_user)
+):
     query = db.query(db_models.Expense).filter(db_models.Expense.user_id == current_user.id)
     
     preset_filters = ["last_week", "last_month", "last_3_months"]
