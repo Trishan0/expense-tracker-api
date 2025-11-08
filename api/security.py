@@ -6,17 +6,19 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from api.db_functions import get_db
 import api.db_models as db_models
+import os
+from dotenv import load_dotenv
 
-# JWT Configuration
-SECRET_KEY = "your-secret-key-here-change-this-in-production"  # TODO: Move to environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+load_dotenv()
 
-# This tells FastAPI where to look for the token
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
     hashed_pwd = pwd_context.hash(password)
@@ -24,7 +26,6 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     verify_status = pwd_context.verify(plain_password, hashed_password)
-
     return verify_status
 
 
@@ -34,13 +35,11 @@ def create_access_token(data: dict) -> str:
     # Calculate expiration time
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    
     # Add expiration to the data
     to_encode.update({"exp": expire})
     
     # Encode the JWT
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    
     return encoded_jwt
 
 def decode_access_token(token:str)-> dict| None:
@@ -67,7 +66,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
         
-    
     user = db.query(db_models.User).filter(db_models.User.id == int(user_id)).first()
     
     if user is None:
@@ -76,6 +74,5 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     return user
     
