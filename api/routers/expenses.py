@@ -7,48 +7,55 @@ import api.models as models
 import logging
 from api.security import get_current_user
 from datetime import datetime, timedelta
+from enum import Enum
+from dateutil.relativedelta import relativedelta
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
+class ExpenseFilter(str, Enum):
+    LAST_WEEK = "last_week"
+    LAST_MONTH = "last_month"
+    LAST_3_MONTHS = "last_3_months"
+    CUSTOM = "custom"
 
-@router.get("/")
+@router.get("/", response_model=list[models.ExpenseResponse])
 def get_all_expenses(
-    filter: str| None = Query(None, description="Filter for expenses. Options: last_week, last_month, last_3_months, custom"),
-    start_date: str| None = Query(None, description="Start date for custom filter (YYYY-MM-DD)"),
-    end_date: str| None = Query(None, description="End date for custom filter (YYYY-MM-DD)"),
+    filter: ExpenseFilter | None = Query(None, description="Filter for expenses. Options: last_week, last_month, last_3_months, custom"),
+    start_date: str | None = Query(None, description="Start date for custom filter (YYYY-MM-DD)"),
+    end_date: str | None = Query(None, description="End date for custom filter (YYYY-MM-DD)"),
     db:Session = Depends(get_db),
     current_user:db_models.User = Depends(get_current_user)
 ):
     query = db.query(db_models.Expense).filter(db_models.Expense.user_id == current_user.id)
-    
-    preset_filters = ["last_week", "last_month", "last_3_months"]
-    
+
+    preset_filters = [ExpenseFilter.LAST_WEEK, ExpenseFilter.LAST_MONTH, ExpenseFilter.LAST_3_MONTHS]
+
     if filter in preset_filters and (start_date is not None or end_date is not None):
         raise HTTPException(status_code=400, detail=f"Cannot use start_date/end_date with filter='{filter}'. Use filter='custom' for custom date ranges.")
-    
-    if filter not in preset_filters and filter != "custom" and filter is not None:
+
+    if filter not in preset_filters and filter != ExpenseFilter.CUSTOM and filter is not None:
         raise HTTPException(status_code=400, detail=f"Invalid filter value: '{filter}'. Valid options: last_week, last_month, last_3_months, custom")
     
     if filter is None and (start_date is not None or end_date is not None):
         raise HTTPException(status_code=400, detail="start_date and end_date can only be used with filter='custom'")
     elif filter is None:
         pass
-    
-    elif filter =="last_week":
-        last_week = datetime.now() - timedelta(days=7)
+
+    elif filter == ExpenseFilter.LAST_WEEK:
+        last_week = datetime.now() - relativedelta(days=7)
         query = query.filter(db_models.Expense.date >= last_week)
-        
-    elif filter =="last_month":
-        last_month = datetime.now() - timedelta(days=30)
+
+    elif filter == ExpenseFilter.LAST_MONTH:
+        last_month = datetime.now() - relativedelta(months=1)
         query = query.filter(db_models.Expense.date >= last_month)
-        
-    elif filter =="last_3_months":
-        last_three_months = datetime.now() - timedelta(days=90)
+
+    elif filter == ExpenseFilter.LAST_3_MONTHS:
+        last_three_months = datetime.now() - relativedelta(months=3)
         query = query.filter(db_models.Expense.date >= last_three_months)
-        
-    elif filter == "custom":
+
+    elif filter == ExpenseFilter.CUSTOM:
         if start_date is None or end_date is None:
             raise HTTPException(status_code=400, detail="start_date and end_date are required  when filter='custom'")
         try:
@@ -65,7 +72,7 @@ def get_all_expenses(
     else:
         raise HTTPException(status_code=400, detail="Invalid filter value")
             
-    db_expenses = query.all()
+    db_expenses = query.order_by(db_models.Expense.date.desc()).all()
     return db_expenses
     
 
