@@ -8,7 +8,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=models.UserResponse, status_code=status.HTTP_201_CREATED,)
-def register_user(user: models.UserRegister, db: Session = Depends(get_db)):
+def register_user(
+    user: models.UserRegister,
+    db: Session = Depends(get_db)
+):
     existing_user = db.query(db_models.User).filter(db_models.User.username == user.username).first()
     
     if existing_user:
@@ -28,7 +31,10 @@ def register_user(user: models.UserRegister, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", status_code=status.HTTP_200_OK)
-def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
     user = db.query(db_models.User).filter(db_models.User.username == form_data.username).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")

@@ -77,14 +77,22 @@ def get_all_expenses(
     
 
 @router.get("/{expense_id}")
-def get_expense_by_id(expense_id:int, db:Session = Depends(get_db), current_user: db_models.User = Depends(get_current_user)):
+def get_expense_by_id(
+    expense_id:int,
+    db:Session = Depends(get_db),
+    current_user: db_models.User = Depends(get_current_user)
+):
     expense = db.query(db_models.Expense).filter(db_models.Expense.id == expense_id, db_models.Expense.user_id == current_user.id).first()
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
     return expense
 
 @router.post("/")
-def create_expense(expense:models.ExpenseCreate, db:Session = Depends(get_db), current_user:db_models.User = Depends(get_current_user)):
+def create_expense(
+    expense:models.ExpenseCreate,
+    db:Session = Depends(get_db),
+    current_user:db_models.User = Depends(get_current_user)
+):
     db_expense = db_models.Expense(**expense.model_dump(),user_id = current_user.id)
     db.add(db_expense)
     db.commit()
@@ -93,7 +101,12 @@ def create_expense(expense:models.ExpenseCreate, db:Session = Depends(get_db), c
     return db_expense
 
 @router.patch("/{expense_id}")
-def partial_update_expense(expense_id: int, updated_fields: models.ExpenseUpdate, db: Session = Depends(get_db), current_user:db_models.User= Depends(get_current_user)):
+def partial_update_expense(
+    expense_id: int,
+    updated_fields: models.ExpenseUpdate,
+    db: Session = Depends(get_db),
+    current_user:db_models.User= Depends(get_current_user)
+):
     expense = db.query(db_models.Expense).filter(db_models.Expense.id == expense_id, db_models.Expense.user_id == current_user.id).first()
     
     if not expense:
@@ -112,7 +125,11 @@ def partial_update_expense(expense_id: int, updated_fields: models.ExpenseUpdate
     
  
 @router.delete("/{expense_id}")
-def delete_expense(expense_id:int, db:Session = Depends(get_db), current_user:db_models.User = Depends(get_current_user)):
+def delete_expense(
+    expense_id:int,
+    db:Session = Depends(get_db),
+    current_user:db_models.User = Depends(get_current_user)
+):
     expense = db.query(db_models.Expense).filter(db_models.Expense.id == expense_id, db_models.Expense.user_id == current_user.id).first()
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
