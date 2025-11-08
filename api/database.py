@@ -1,8 +1,13 @@
+from dotenv import load_dotenv
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+load_dotenv()
 
-db_url = "postgresql://postgres:admin@localhost/fastapia"
+db_url = os.getenv("DATABASE_URL")
+if not db_url:
+    raise ValueError("DATABASE_URL environment variable not set")
 
 engine = create_engine(db_url)
 
