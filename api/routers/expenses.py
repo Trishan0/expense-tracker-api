@@ -28,7 +28,9 @@ def get_all_expenses(filter: str| None = None, start_date: str| None = None, end
     if filter not in preset_filters and filter != "custom" and filter is not None:
         raise HTTPException(status_code=400, detail=f"Invalid filter value: '{filter}'. Valid options: last_week, last_month, last_3_months, custom")
     
-    if filter is None:
+    if filter is None and (start_date is not None or end_date is not None):
+        raise HTTPException(status_code=400, detail="start_date and end_date can only be used with filter='custom'")
+    elif filter is None:
         pass
     
     elif filter =="last_week":
