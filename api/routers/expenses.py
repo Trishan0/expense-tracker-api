@@ -17,8 +17,20 @@ router = APIRouter(prefix="/expenses", tags=["Expenses"])
 def get_all_expenses(filter: str| None = None, start_date: str| None = None, end_date: str| None = None, db:Session = Depends(get_db), current_user:db_models.User = Depends(get_current_user)):
     query = db.query(db_models.Expense).filter(db_models.Expense.user_id == current_user.id)
     
+    preset_filters = ["last_week", "last_month", "last_3_months"]
+    
+    if filter in preset_filters and (start_date is not None or end_date is not None):
+        raise HTTPException(status_code=400, detail=f"Cannot use start_date/end_date with filter='{filter}'. Use filter='custom' for custom date ranges.")
+    
+    if filter == "custom" and (start_date is None or end_date is None):
+        raise HTTPException(status_code=400, detail="start_date and end_date are required  when filter='custom'")
+    
+    if filter not in preset_filters and filter != "custom" and filter is not None:
+        raise HTTPException(status_code=400, detail=f"Invalid filter value: '{filter}'. Valid options: last_week, last_month, last_3_months, custom")
+    
     if filter is None:
         pass
+    
     elif filter =="last_week":
         last_week = datetime.now() - timedelta(days=7)
         query = query.filter(db_models.Expense.date >= last_week)
