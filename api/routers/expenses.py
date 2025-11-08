@@ -6,6 +6,7 @@ import api.db_models as db_models
 import api.models as models
 import logging
 from api.security import get_current_user
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,44 @@ router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
 
 @router.get("/")
-def get_all_expenses(db:Session = Depends(get_db), current_user:db_models.User = Depends(get_current_user)):
-    db_expenses = db.query(db_models.Expense).filter(db_models.Expense.user_id == current_user.id).all()
+def get_all_expenses(filter: str| None = None, start_date: str| None = None, end_date: str| None = None, db:Session = Depends(get_db), current_user:db_models.User = Depends(get_current_user)):
+    query = db.query(db_models.Expense).filter(db_models.Expense.user_id == current_user.id)
+    
+    if filter is None:
+        pass
+    elif filter =="last_week":
+        last_week = datetime.now() - timedelta(days=7)
+        query = query.filter(db_models.Expense.date >= last_week)
+        
+    elif filter =="last_month":
+        last_month = datetime.now() - timedelta(days=30)
+        query = query.filter(db_models.Expense.date >= last_month)
+        
+    elif filter =="last_3_months":
+        last_three_months = datetime.now() - timedelta(days=90)
+        query = query.filter(db_models.Expense.date >= last_three_months)
+        
+    elif filter == "custom":
+        if start_date is None or end_date is None:
+            raise HTTPException(status_code=400, detail="start_date and end_date are required for custom filter")
+        try:
+            start_dt = datetime.fromisoformat(start_date)
+            end_dt = datetime.fromisoformat(end_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+        if start_dt > end_dt:
+            raise HTTPException(status_code=400, detail="start_date must be before end_date")
+        try:
+            
+            query = query.filter(db_models.Expense.date >= start_dt, db_models.Expense.date <= end_dt)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format")
+        
+    else:
+        raise HTTPException(status_code=400, detail="Invalid filter value")
+            
+    db_expenses = query.all()
     return db_expenses
     
 
